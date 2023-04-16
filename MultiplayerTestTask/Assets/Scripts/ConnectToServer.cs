@@ -1,4 +1,3 @@
-using UnityEngine;
 using Photon.Pun;
 using UnityEngine.SceneManagement;
 
@@ -11,7 +10,6 @@ public class ConnectToServer : MonoBehaviourPunCallbacks
 
     public override void OnConnectedToMaster()
     {
-        Debug.Log("connect");
         SceneManager.LoadScene(1);
     }
 }

@@ -1,23 +1,45 @@
 using Photon.Pun;
+using TMPro;
 using UnityEngine;
 
 public class Player : MonoBehaviourPun, IPunObservable
 {
     [SerializeField] private PhotonView _photonView;
     [SerializeField] private float _moveSpeed = 3;
-    [SerializeField] private float _jumpForce = 5;
+    [SerializeField] private float _jumpForce = 200;
+    [SerializeField] private GameObject _playerCamera;
+    [SerializeField] private TMP_Text _playerName;
 
+    private GameObject _sceneCamera;
     private Vector3 _smoothMove;
     private SpriteRenderer _spriteRenderer;
+    private Rigidbody2D _rigidBody2D;
+    private bool _isGrounded;
 
     private void Start()
     {
-        _spriteRenderer = GetComponent<SpriteRenderer>();
+        PhotonNetwork.SendRate = 20;
+        PhotonNetwork.SerializationRate = 15;
+        if (photonView.IsMine)
+        {
+            _playerName.text = PhotonNetwork.NickName;
+
+            _spriteRenderer = GetComponent<SpriteRenderer>();
+            _rigidBody2D = GetComponent<Rigidbody2D>();
+
+            _sceneCamera = GameObject.Find("Main Camera");
+            _sceneCamera.SetActive(false);
+            _playerCamera.SetActive(true);
+        }
+        else
+        {
+            _playerName.text = _photonView.Owner.NickName;
+        }
     }
 
     private void Update()
     {
-        if (_photonView.IsMine)
+        if (photonView.IsMine)
         {
             ProcessInputs();
         }
@@ -38,6 +60,37 @@ public class Player : MonoBehaviourPun, IPunObservable
         transform.position += _move * _moveSpeed * Time.deltaTime;
 
         PlayerTurn();
+        PlayerJump();
+    }
+
+    private void PlayerJump()
+    {
+        if (Input.GetKeyDown(KeyCode.Space) && _isGrounded)
+        {
+            _rigidBody2D.AddForce(Vector2.up * _jumpForce);
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (photonView.IsMine)
+        {
+            if (collision.gameObject.tag == "Ground")
+            {
+                _isGrounded = true;
+            }
+        }
+    }
+
+    private void OnCollisionExit2D(Collision2D collision)
+    {
+        if (photonView.IsMine)
+        {
+            if (collision.gameObject.tag == "Ground")
+            {
+                _isGrounded = false;
+            }
+        }
     }
 
     private void PlayerTurn()
